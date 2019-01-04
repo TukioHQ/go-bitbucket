@@ -10,7 +10,7 @@ type Repositories struct {
 	Diff               *Diff
 	BranchRestrictions *BranchRestrictions
 	Webhooks           *Webhooks
-	Downloads		   *Downloads
+	Downloads          *Downloads
 	repositories
 }
 
@@ -31,6 +31,6 @@ func (r *Repositories) ListForTeam(ro *RepositoriesOptions) (interface{}, error)
 }
 
 func (r *Repositories) ListPublic() (interface{}, error) {
-	urlStr := r.c.requestUrl("/repositories/", "")
+	urlStr := r.c.requestUrl("/repositories/%s", "")
 	return r.c.execute("GET", urlStr, "")
 }

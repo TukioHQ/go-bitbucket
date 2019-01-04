@@ -11,14 +11,15 @@ import (
 	"strconv"
 	"strings"
 
+	"bytes"
+	"io"
+	"mime/multipart"
+	"os"
+
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/bitbucket"
 	"golang.org/x/oauth2/clientcredentials"
-	"bytes"
-	"mime/multipart"
-	"io"
-	"os"
 )
 
 const DEFAULT_PAGE_LENGTH = 10
@@ -31,7 +32,7 @@ type Client struct {
 	Repositories *Repositories
 	Pagelen      uint64
 
-	HttpClient 	 *http.Client
+	HttpClient *http.Client
 }
 
 type auth struct {
@@ -111,7 +112,7 @@ func injectClient(a *auth) *Client {
 		Diff:               &Diff{c: c},
 		BranchRestrictions: &BranchRestrictions{c: c},
 		Webhooks:           &Webhooks{c: c},
-		Downloads:			&Downloads{c: c},
+		Downloads:          &Downloads{c: c},
 	}
 	c.Users = &Users{c: c}
 	c.User = &User{c: c}
@@ -122,7 +123,7 @@ func injectClient(a *auth) *Client {
 
 func (c *Client) execute(method string, urlStr string, text string) (interface{}, error) {
 	// Use pagination if changed from default value
-	const DEC_RADIX = 10
+	const DecRadix = 10
 	if strings.Contains(urlStr, "/repositories/") {
 		if c.Pagelen != DEFAULT_PAGE_LENGTH {
 			urlObj, err := url.Parse(urlStr)
@@ -130,7 +131,7 @@ func (c *Client) execute(method string, urlStr string, text string) (interface{}
 				return nil, err
 			}
 			q := urlObj.Query()
-			q.Set("pagelen", strconv.FormatUint(c.Pagelen, DEC_RADIX))
+			q.Set("pagelen", strconv.FormatUint(c.Pagelen, DecRadix))
 			urlObj.RawQuery = q.Encode()
 			urlStr = urlObj.String()
 		}
@@ -148,18 +149,20 @@ func (c *Client) execute(method string, urlStr string, text string) (interface{}
 
 	c.authenticateRequest(req)
 	result, err := c.doRequest(req, false)
-
+	if err != nil {
+		return nil, err
+	}
 	//autopaginate.
 	resultMap, isMap := result.(map[string]interface{})
 	if isMap {
 		nextIn := resultMap["next"]
 		valuesIn := resultMap["values"]
 		if nextIn != nil && valuesIn != nil {
-			nextUrl := nextIn.(string)
-			if nextUrl != "" {
+			nextURL := nextIn.(string)
+			if nextURL != "" {
 				valuesSlice := valuesIn.([]interface{})
 				if valuesSlice != nil {
-					nextResult, err := c.execute(method, nextUrl, text)
+					nextResult, err := c.execute(method, nextURL, text)
 					if err != nil {
 						return nil, err
 					}
@@ -181,11 +184,10 @@ func (c *Client) execute(method string, urlStr string, text string) (interface{}
 					delete(resultMap, "pagelen")
 					delete(resultMap, "size")
 					result = resultMap
-				}
-			}
-		}
-	}
-
+				} //END-IF
+			} //END-IF
+		} //END-IF
+	} //END-IF
 	return result, nil
 }
 
@@ -202,7 +204,7 @@ func (c *Client) executeFileUpload(method string, urlStr string, filePath string
 
 	var fw io.Writer
 	if fw, err = w.CreateFormFile("files", fileName); err != nil {
-		return nil , err
+		return nil, err
 	}
 
 	if _, err = io.Copy(fw, fileReader); err != nil {
@@ -226,7 +228,7 @@ func (c *Client) executeFileUpload(method string, urlStr string, filePath string
 
 }
 
-func (c *Client) authenticateRequest(req *http.Request){
+func (c *Client) authenticateRequest(req *http.Request) {
 	if c.Auth.bearerToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Auth.bearerToken)
 	}
@@ -239,8 +241,7 @@ func (c *Client) authenticateRequest(req *http.Request){
 	return
 }
 
-
-func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, error){
+func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, error) {
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -250,8 +251,8 @@ func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, 
 		defer resp.Body.Close()
 	}
 
-	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusCreated) {
-		return nil, fmt.Errorf(resp.Status)
+	if resp.StatusCode > http.StatusPartialContent {
+		return nil, c.error(resp)
 	}
 
 	if emptyResponse {
@@ -276,6 +277,13 @@ func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, 
 	return result, nil
 }
 
+func (c *Client) error(resp *http.Response) error {
+
+	err := Error{}
+	json.NewDecoder(resp.Body).Decode(&err)
+	err.Status = resp.StatusCode
+	return err
+}
 
 func (c *Client) requestUrl(template string, args ...interface{}) string {
 
