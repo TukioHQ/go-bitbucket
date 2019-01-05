@@ -20,6 +20,7 @@ type users interface {
 type user interface {
 	Profile() (interface{}, error)
 	Emails() (interface{}, error)
+	RepoPermission(repoFullName string) (interface{}, error)
 }
 
 type pullrequests interface {

@@ -90,7 +90,6 @@ func (r *Repository) UpdatePipelineConfig(rpo *RepositoryPipelineOptions) (*Pipe
 	if err != nil {
 		return nil, err
 	}
-
 	return decodePipelineRepository(response)
 }
 
@@ -102,7 +101,6 @@ func (r *Repository) AddPipelineVariable(rpvo *RepositoryPipelineVariableOptions
 	if err != nil {
 		return nil, err
 	}
-
 	return decodePipelineVariableRepository(response)
 }
 
