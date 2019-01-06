@@ -43,6 +43,7 @@ type repository interface {
 	Delete(opt RepositoryOptions) (interface{}, error)
 	ListWatchers(opt RepositoryOptions) (interface{}, error)
 	ListForks(opt RepositoryOptions) (interface{}, error)
+	SourceContent(opt SourceContentOption) (interface{}, error)
 	UpdatePipelineConfig(opt RepositoryPipelineOptions) (*Pipeline, error)
 	AddPipelineVariable(opt RepositoryPipelineVariableOptions) (*PipelineVariable, error)
 	AddPipelineKeyPair(opt RepositoryPipelineKeyPairOptions) (*PipelineKeyPair, error)
@@ -139,6 +140,13 @@ type CommitsOptions struct {
 	Include     string `json:"include"`
 	Exclude     string `json:"exclude"`
 	CommentID   string `json:"comment_id"`
+}
+
+type SourceContentOption struct {
+	Owner    string `json:"owner"`
+	RepoSlug string `json:"repo_slug"`
+	Revision string `json:"revision"`
+	Path     string `json:"path"`
 }
 
 type CommitStatusOptions struct {

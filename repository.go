@@ -2,6 +2,7 @@ package bitbucket
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/k0kubun/pp"
@@ -114,6 +115,15 @@ func (r *Repository) AddPipelineKeyPair(rpkpo *RepositoryPipelineKeyPairOptions)
 	}
 
 	return decodePipelineKeyPairRepository(response)
+}
+
+//Sourcecontent used to retrieve the contents of a single file,
+// or the contents of a directory at a specified revision
+func (r *Repository) SourceContent(sco *SourceContentOption) (interface{}, error) {
+	args := []interface{}{sco.Owner, sco.RepoSlug, sco.Revision, sco.Path}
+	urlStr := r.c.requestUrl("/repositories/%s/%s/src/%s/%s", args...)
+	fmt.Printf("->>>>> %s\n", urlStr)
+	return r.c.execute("GET", urlStr, "")
 }
 
 func (r *Repository) buildJsonBody(body map[string]interface{}) string {
