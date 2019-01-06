@@ -40,6 +40,7 @@ type pullrequests interface {
 type repository interface {
 	Get(opt RepositoryOptions) (*Repository, error)
 	Create(opt RepositoryOptions) (*Repository, error)
+	CreateBuildStatus(opt CreateBuildStatusOptions) (interface{}, error)
 	Delete(opt RepositoryOptions) (interface{}, error)
 	ListWatchers(opt RepositoryOptions) (interface{}, error)
 	ListForks(opt RepositoryOptions) (interface{}, error)
@@ -114,6 +115,14 @@ type RepositoryOptions struct {
 	HasIssues   string `json:"has_issues"`
 	HasWiki     string `json:"has_wiki"`
 	Project     string `json:"project"`
+}
+
+//CreateBuildStatusOptions required to create status or fetch status(es)
+type CreateBuildStatusOptions struct {
+	Owner    string                 `json:"owner"`     // Owner    string `json:"owner"`
+	RepoSlug string                 `json:"repo_slug"` // This can either be the repository slug or the UUID of the repository
+	Node     string                 `json:"node"`      //The commit's SHA1
+	Body     map[string]interface{} `json:"data"`      // POST body of request
 }
 
 type PullRequestsOptions struct {

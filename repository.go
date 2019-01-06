@@ -2,7 +2,6 @@ package bitbucket
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/k0kubun/pp"
@@ -122,8 +121,15 @@ func (r *Repository) AddPipelineKeyPair(rpkpo *RepositoryPipelineKeyPairOptions)
 func (r *Repository) SourceContent(sco *SourceContentOption) (interface{}, error) {
 	args := []interface{}{sco.Owner, sco.RepoSlug, sco.Revision, sco.Path}
 	urlStr := r.c.requestUrl("/repositories/%s/%s/src/%s/%s", args...)
-	fmt.Printf("->>>>> %s\n", urlStr)
 	return r.c.execute("GET", urlStr, "")
+}
+
+// CreateBuildStatus create build status against a repository on bitbucket
+func (r *Repository) CreateBuildStatus(so *CreateBuildStatusOptions) (interface{}, error) {
+	args := []interface{}{so.Owner, so.RepoSlug, so.Node}
+	urlStr := r.c.requestUrl("/repositories/%s/%s/commit/%s/statuses/build", args...)
+	body := r.buildJsonBody(so.Body)
+	return r.c.execute("POST", urlStr, body)
 }
 
 func (r *Repository) buildJsonBody(body map[string]interface{}) string {
