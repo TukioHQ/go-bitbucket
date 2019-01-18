@@ -2,6 +2,7 @@ package bitbucket
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -278,9 +279,13 @@ func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, 
 }
 
 func (c *Client) error(resp *http.Response) error {
-
 	err := Error{}
 	json.NewDecoder(resp.Body).Decode(&err)
+	if err.Error() == "" && resp.StatusCode == 401 {
+		var msg = "Unauthorized Bitbucket access"
+		err.Body.Message = msg
+		return errors.New(msg)
+	}
 	err.Status = resp.StatusCode
 	return err
 }
