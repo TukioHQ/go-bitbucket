@@ -73,6 +73,11 @@ func (r *Repository) Delete(ro *RepositoryOptions) (interface{}, error) {
 	return r.c.execute("DELETE", urlStr, "")
 }
 
+func (r *Repository) GetCommit(gco *GetCommitOptions) (interface{}, error) {
+	urlStr := r.c.requestUrl("/repositories/%s/%s/commit/%s", gco.Owner, gco.RepoSlug, gco.Node)
+	return r.c.execute("GET", urlStr, "")
+}
+
 func (r *Repository) ListWatchers(ro *RepositoryOptions) (interface{}, error) {
 	urlStr := r.c.requestUrl("/repositories/%s/%s/watchers", ro.Owner, ro.RepoSlug)
 	return r.c.execute("GET", urlStr, "")

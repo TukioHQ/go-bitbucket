@@ -41,6 +41,7 @@ type repository interface {
 	Get(opt RepositoryOptions) (*Repository, error)
 	Create(opt RepositoryOptions) (*Repository, error)
 	CreateBuildStatus(opt CreateBuildStatusOptions) (interface{}, error)
+	GetCommit(opt GetCommitOptions) (interface{}, error)
 	Delete(opt RepositoryOptions) (interface{}, error)
 	ListWatchers(opt RepositoryOptions) (interface{}, error)
 	ListForks(opt RepositoryOptions) (interface{}, error)
@@ -119,10 +120,18 @@ type RepositoryOptions struct {
 
 //CreateBuildStatusOptions required to create status or fetch status(es)
 type CreateBuildStatusOptions struct {
-	Owner    string                 `json:"owner"`     // Owner    string `json:"owner"`
+	Owner    string                 `json:"owner"`     // Owner string `json:"owner"`
 	RepoSlug string                 `json:"repo_slug"` // This can either be the repository slug or the UUID of the repository
 	Node     string                 `json:"node"`      //The commit's SHA1
 	Body     map[string]interface{} `json:"data"`      // POST body of request
+}
+
+// GetCommitOptions required for call to GetCommit to fetch commit
+// matching the supplied option details
+type GetCommitOptions struct {
+	Owner    string `json:"owner"`     // Owner i.e username, team or uuid to which the repository belong
+	RepoSlug string `json:"repo_slug"` // This can either be the repository slug or the UUID of the repository
+	Node     string `json:"node"`      //The commit's SHA1
 }
 
 type PullRequestsOptions struct {
