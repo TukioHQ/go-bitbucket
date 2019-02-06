@@ -39,13 +39,14 @@ type pullrequests interface {
 
 type repository interface {
 	Get(opt RepositoryOptions) (*Repository, error)
+	GetTag(owner, repoSlug, tagName string) (interface{}, error)
 	Create(opt RepositoryOptions) (*Repository, error)
 	CreateBuildStatus(opt CreateBuildStatusOptions) (interface{}, error)
 	GetCommit(opt GetCommitOptions) (interface{}, error)
 	Delete(opt RepositoryOptions) (interface{}, error)
 	ListWatchers(opt RepositoryOptions) (interface{}, error)
 	ListForks(opt RepositoryOptions) (interface{}, error)
-	SourceContent(opt SourceContentOption) (interface{}, error)
+	SourceContent(opt SourceContentOption) ([]byte, error)
 	UpdatePipelineConfig(opt RepositoryPipelineOptions) (*Pipeline, error)
 	AddPipelineVariable(opt RepositoryPipelineVariableOptions) (*PipelineVariable, error)
 	AddPipelineKeyPair(opt RepositoryPipelineKeyPairOptions) (*PipelineKeyPair, error)

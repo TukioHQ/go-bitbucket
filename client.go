@@ -122,6 +122,20 @@ func injectClient(a *auth) *Client {
 	return c
 }
 
+func (c *Client) doRawRequest(method string, urlStr string, text string) ([]byte, error) {
+	body := strings.NewReader(text)
+	req, err := http.NewRequest(method, urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	c.authenticateRequest(req)
+	result, err := c.doRequest(req, false, true)
+	if err != nil {
+		return nil, err
+	}
+	return result.([]byte), nil
+}
+
 func (c *Client) execute(method string, urlStr string, text string) (interface{}, error) {
 	// Use pagination if changed from default value
 	const DecRadix = 10
@@ -139,7 +153,6 @@ func (c *Client) execute(method string, urlStr string, text string) (interface{}
 	}
 
 	body := strings.NewReader(text)
-
 	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
@@ -149,7 +162,7 @@ func (c *Client) execute(method string, urlStr string, text string) (interface{}
 	}
 
 	c.authenticateRequest(req)
-	result, err := c.doRequest(req, false)
+	result, err := c.doRequest(req, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +238,7 @@ func (c *Client) executeFileUpload(method string, urlStr string, filePath string
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	c.authenticateRequest(req)
-	return c.doRequest(req, true)
+	return c.doRequest(req, true, false)
 
 }
 
@@ -242,8 +255,7 @@ func (c *Client) authenticateRequest(req *http.Request) {
 	return
 }
 
-func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, error) {
-
+func (c *Client) doRequest(req *http.Request, ignoreResp, isRawResp bool) (interface{}, error) {
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -251,15 +263,12 @@ func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, 
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-
 	if resp.StatusCode > http.StatusPartialContent {
 		return nil, c.error(resp)
 	}
-
-	if emptyResponse {
+	if ignoreResp {
 		return nil, nil
 	}
-
 	if resp.Body == nil {
 		return nil, fmt.Errorf("response body is nil")
 	}
@@ -267,6 +276,9 @@ func (c *Client) doRequest(req *http.Request, emptyResponse bool) (interface{}, 
 	resBodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	if isRawResp {
+		return resBodyBytes, nil
 	}
 
 	var result interface{}

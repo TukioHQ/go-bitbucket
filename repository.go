@@ -78,6 +78,11 @@ func (r *Repository) GetCommit(gco *GetCommitOptions) (interface{}, error) {
 	return r.c.execute("GET", urlStr, "")
 }
 
+func (r *Repository) GetTag(owner, repoSlug, tagName string) (interface{}, error) {
+	urlStr := r.c.requestUrl("/repositories/%s/%s/refs/tags/%s", owner, repoSlug, tagName)
+	return r.c.execute("GET", urlStr, "")
+}
+
 func (r *Repository) ListWatchers(ro *RepositoryOptions) (interface{}, error) {
 	urlStr := r.c.requestUrl("/repositories/%s/%s/watchers", ro.Owner, ro.RepoSlug)
 	return r.c.execute("GET", urlStr, "")
@@ -121,12 +126,12 @@ func (r *Repository) AddPipelineKeyPair(rpkpo *RepositoryPipelineKeyPairOptions)
 	return decodePipelineKeyPairRepository(response)
 }
 
-//Sourcecontent used to retrieve the contents of a single file,
+// Sourcecontent used to retrieve the contents of a single file,
 // or the contents of a directory at a specified revision
-func (r *Repository) SourceContent(sco *SourceContentOption) (interface{}, error) {
+func (r *Repository) SourceContent(sco *SourceContentOption) ([]byte, error) {
 	args := []interface{}{sco.Owner, sco.RepoSlug, sco.Revision, sco.Path}
 	urlStr := r.c.requestUrl("/repositories/%s/%s/src/%s/%s", args...)
-	return r.c.execute("GET", urlStr, "")
+	return r.c.doRawRequest("GET", urlStr, "")
 }
 
 // CreateBuildStatus create build status against a repository on bitbucket
